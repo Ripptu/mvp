@@ -77,7 +77,18 @@ function LanguageCurtain({ isOpen, close }: { isOpen: boolean, close: () => void
   );
 }
 
-function GlobalNav({ onOpenLang }: { onOpenLang: () => void }) {
+function FixedLangButton({ onOpenLang }: { onOpenLang: () => void }) {
+  return (
+    <button 
+      onClick={onOpenLang}
+      className="fixed top-8 right-6 md:top-8 md:right-12 z-[105] text-xs font-medium uppercase tracking-widest hover:opacity-70 transition-opacity mix-blend-difference text-white"
+    >
+      EN
+    </button>
+  );
+}
+
+function GlobalNav() {
   const { scrollY } = useScroll();
   const [hidden, setHidden] = useState(true);
   const triggerTransition = useContext(TransitionContext);
@@ -116,8 +127,7 @@ function GlobalNav({ onOpenLang }: { onOpenLang: () => void }) {
       </div>
       <div className="flex items-center gap-6 z-10 w-full md:w-auto justify-between md:justify-end">
         <button className="md:hidden"><Menu size={24} /></button>
-        <div className="flex items-center gap-6">
-          <button onClick={onOpenLang} className="hidden md:block text-xs font-medium uppercase hover:opacity-70 transition-opacity">EN ▼</button>
+        <div className="flex items-center gap-6 pr-10 md:pr-12">
           <button 
             onClick={() => triggerTransition('contact')}
             className="flex items-center justify-center bg-gray-900 text-[#FAF9F6] px-6 py-2.5 text-xs tracking-widest font-medium uppercase rounded-sm overflow-hidden relative group shadow-md cursor-pointer"
@@ -211,7 +221,7 @@ function Hero() {
         <span>KYLIE</span>
         <span className="italic font-light lowercase">affair</span>
       </div>
-      <div>
+      <div className="pr-10 md:pr-12 mt-1 md:mt-2">
         <button onClick={() => triggerTransition('contact')} className="uppercase tracking-widest text-sm md:text-base font-medium hover:opacity-70 transition-opacity cursor-pointer">
           Book Now
         </button>
@@ -228,7 +238,7 @@ function Hero() {
       {/* Base Layer */}
       <div className="absolute inset-0 w-full h-full">
         <img 
-          src="https://s1.directupload.eu/images/260418/zeocn4ti.webp" 
+          src="https://s1.directupload.eu/images/260418/53fl63r3.webp" 
           className="w-full h-full object-cover object-center" 
           alt="Kylie Base" 
         />
@@ -238,7 +248,7 @@ function Hero() {
       {/* Masked Reveal Layer */}
       <div className="absolute inset-0 w-full h-full hero-blob-mask pointer-events-none">
         <img 
-          src="https://s1.directupload.eu/images/260418/68wyl8p2.webp" 
+          src="https://s1.directupload.eu/images/260418/c8pt4672.webp" 
           className="w-full h-full object-cover object-center" 
           alt="Kylie Reveal" 
         />
@@ -255,55 +265,69 @@ function StackingLayout() {
     offset: ["start start", "end end"]
   });
 
-  const scale = useTransform(scrollYProgress, [0, 0.4], [1, 0.92]);
-  const opacity = useTransform(scrollYProgress, [0, 0.4], [0, 0.7]);
+  const scale = useTransform(scrollYProgress, [0, 0.4, 0.8], [1, 1, 0.92]);
+  const opacity = useTransform(scrollYProgress, [0, 0.4, 0.8], [0, 0, 0.7]);
 
   return (
     <div ref={containerRef} className="relative z-10 w-full bg-white">
       {/* Sticky About Section */}
       <motion.section 
         style={{ scale }}
-        className="sticky top-0 h-screen px-6 md:px-12 flex flex-col justify-center overflow-hidden bg-white"
+        className="sticky top-0 h-screen py-8 md:py-10 flex flex-col justify-between overflow-hidden bg-white"
       >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-10%" }}
-            variants={imageReveal}
-            className="w-full md:w-1/2 flex justify-center lg:justify-start"
-          >
-            <motion.div 
-              animate={{ 
-                borderTopLeftRadius: ["50%", "42%", "50%", "58%", "50%"], 
-                borderTopRightRadius: ["50%", "58%", "50%", "42%", "50%"] 
-              }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-              className="relative w-full max-w-[400px] aspect-[2/3] overflow-hidden shadow-2xl shadow-gray-200/50 bg-gray-200"
-            >
-              <img 
-                src={grayPlaceholder} 
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          </motion.div>
+        <div className="w-full flex-1 flex flex-col justify-center relative z-10">
           <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-10%" }}
             variants={staggerContainer}
-            className="w-full md:w-1/2 flex flex-col items-start"
+            className="w-full flex flex-col items-center text-center px-6 md:px-12 mb-4 md:mb-8 mt-6 md:mt-2"
           >
-            <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-serif mb-6 uppercase tracking-wide text-gray-900">
+            <motion.h2 variants={fadeInUp} className="text-[11vw] leading-[0.8] font-serif mb-4 md:mb-5 uppercase tracking-tighter text-gray-900 w-full whitespace-nowrap overflow-hidden">
               I AM <span className="italic font-light lowercase">kylie</span> AFFAIR
             </motion.h2>
-            <motion.p variants={fadeInUp} className="text-gray-700 mb-8 text-lg leading-relaxed max-w-lg">
+            <motion.p variants={fadeInUp} className="text-gray-700 mb-4 md:mb-6 text-sm md:text-lg leading-relaxed max-w-3xl mx-auto">
               As an independent companion based in Düsseldorf, I am delighted to meet you here or in other destinations across Europe and beyond. With a genuine love for travel, elegant hotels, and meaningful encounters, I am available for engagements worldwide — wherever sophistication and serenity meet.
             </motion.p>
-            <motion.button variants={fadeInUp} className="uppercase text-sm tracking-widest border-b border-gray-900 pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
+            <motion.button variants={fadeInUp} className="uppercase text-xs tracking-widest border-b border-gray-900 pb-0.5 hover:text-gray-500 hover:border-gray-500 transition-colors">
               Learn About Kylie
             </motion.button>
+          </motion.div>
+
+          {/* Continuous Image Slider */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+            className="w-full"
+          >
+            <Swiper
+              modules={[Autoplay]}
+              spaceBetween={24}
+              slidesPerView="auto"
+              loop={true}
+              speed={5000}
+              grabCursor={true}
+              autoplay={{
+                delay: 0,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              className="w-full continuous-slider px-6 md:px-12 pb-4"
+            >
+              {[1, 2, 3, 4, 5, 6].map((_, idx) => (
+                <SwiperSlide 
+                  key={idx}
+                  className="!h-[50vh] md:!h-[55vh] lg:!h-[62vh] !w-auto aspect-[4/5] relative rounded-sm overflow-hidden group shadow-2xl shadow-gray-200/50 bg-gray-200"
+                >
+                  <img src={grayPlaceholder} alt="Slider Image" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                    <span className="text-[#EFEBE4] font-serif tracking-widest text-lg md:text-xl uppercase">Kylie Affair</span>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </motion.div>
         </div>
         <motion.div 
@@ -311,6 +335,9 @@ function StackingLayout() {
           className="absolute inset-0 bg-black pointer-events-none z-20" 
         />
       </motion.section>
+
+      {/* Spacer to give the slider time to be viewed before the next section overlaps */}
+      <div className="h-[80vh] w-full pointer-events-none"></div>
 
       {/* Philosophy Section that scrolls over */}
       <section className="relative z-30 bg-[#FAF9F6] py-24 px-6 md:px-12 shadow-[0_-30px_60px_rgba(0,0,0,0.15)] rounded-t-[3rem]">
@@ -578,7 +605,8 @@ export default function App() {
     <TransitionProvider>
       <div className="font-sans text-gray-900 antialiased selection:bg-[#1A1A1A] selection:text-[#EFEBE4]">
         <LanguageCurtain isOpen={isLangOpen} close={() => setIsLangOpen(false)} />
-        <GlobalNav onOpenLang={() => setIsLangOpen(true)} />
+        <FixedLangButton onOpenLang={() => setIsLangOpen(true)} />
+        <GlobalNav />
         <main>
           <Hero />
           <StackingLayout />
