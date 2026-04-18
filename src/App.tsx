@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react';
 import { Play, ChevronDown, Menu } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
+import Lenis from 'lenis';
 import 'swiper/css';
 
 // Context for Page Transition Overlays
@@ -47,7 +48,36 @@ function TransitionProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function GlobalNav() {
+function LanguageCurtain({ isOpen, close }: { isOpen: boolean, close: () => void }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ y: "-100%" }}
+          animate={{ y: "0%" }}
+          exit={{ y: "-100%" }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-[110] bg-[#1a1a1a] flex flex-col items-center justify-center"
+        >
+          <button onClick={close} className="absolute top-8 right-8 text-[#EFEBE4] text-xs tracking-widest uppercase hover:opacity-70 transition-opacity">Close ✕</button>
+          <div className="flex flex-col gap-10 text-center text-[#EFEBE4] font-serif text-5xl md:text-7xl uppercase tracking-widest">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -20 }} transition={{ delay: 0.2 }}>
+              <button onClick={close} className="hover:text-gray-400 hover:italic transition-all">English</button>
+            </motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -20 }} transition={{ delay: 0.3 }}>
+              <button onClick={close} className="hover:text-gray-400 hover:italic transition-all">Deutsch</button>
+            </motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -20 }} transition={{ delay: 0.4 }}>
+              <button onClick={close} className="hover:text-gray-400 hover:italic transition-all">Français</button>
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function GlobalNav({ onOpenLang }: { onOpenLang: () => void }) {
   const { scrollY } = useScroll();
   const [hidden, setHidden] = useState(true);
   const triggerTransition = useContext(TransitionContext);
@@ -87,6 +117,7 @@ function GlobalNav() {
       <div className="flex items-center gap-6 z-10 w-full md:w-auto justify-between md:justify-end">
         <button className="md:hidden"><Menu size={24} /></button>
         <div className="flex items-center gap-6">
+          <button onClick={onOpenLang} className="hidden md:block text-xs font-medium uppercase hover:opacity-70 transition-opacity">EN ▼</button>
           <button 
             onClick={() => triggerTransition('contact')}
             className="flex items-center justify-center bg-gray-900 text-[#FAF9F6] px-6 py-2.5 text-xs tracking-widest font-medium uppercase rounded-sm overflow-hidden relative group shadow-md cursor-pointer"
@@ -242,13 +273,20 @@ function StackingLayout() {
             variants={imageReveal}
             className="w-full md:w-1/2 flex justify-center lg:justify-start"
           >
-            <div className="relative w-full max-w-[400px] aspect-[2/3] rounded-t-full overflow-hidden shadow-2xl shadow-gray-200/50 bg-gray-200">
+            <motion.div 
+              animate={{ 
+                borderTopLeftRadius: ["50%", "42%", "50%", "58%", "50%"], 
+                borderTopRightRadius: ["50%", "58%", "50%", "42%", "50%"] 
+              }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+              className="relative w-full max-w-[400px] aspect-[2/3] overflow-hidden shadow-2xl shadow-gray-200/50 bg-gray-200"
+            >
               <img 
                 src={grayPlaceholder} 
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
-            </div>
+            </motion.div>
           </motion.div>
           <motion.div 
             initial="hidden"
@@ -317,9 +355,28 @@ const accordionData = [
 
 function InteractiveFlex() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const containerRef = useRef<HTMLElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      containerRef.current.style.setProperty('--spotlight-x', `${x}px`);
+      containerRef.current.style.setProperty('--spotlight-y', `${y}px`);
+    }
+  };
 
   return (
-    <section id="services" className="py-24 px-6 md:px-12 bg-[#1A1A1A] text-[#EFEBE4] overflow-hidden">
+    <section 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      id="services" 
+      className="py-24 px-6 md:px-12 bg-[#1A1A1A] text-[#EFEBE4] overflow-hidden relative"
+      style={{
+        backgroundImage: `radial-gradient(800px circle at var(--spotlight-x, -200px) var(--spotlight-y, -200px), rgba(255,255,255,0.06), transparent 40%)`
+      }}
+    >
       <motion.div 
         initial="hidden"
         whileInView="visible"
@@ -416,7 +473,7 @@ function Destinations() {
                 <img 
                   src={city.image} 
                   alt={city.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out opacity-80"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out opacity-80 transform-gpu will-change-transform"
                 />
               </div>
               <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">{city.date}</p>
@@ -496,10 +553,32 @@ function Footer() {
 }
 
 export default function App() {
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    return () => lenis.destroy();
+  }, []);
+
   return (
     <TransitionProvider>
       <div className="font-sans text-gray-900 antialiased selection:bg-[#1A1A1A] selection:text-[#EFEBE4]">
-        <GlobalNav />
+        <LanguageCurtain isOpen={isLangOpen} close={() => setIsLangOpen(false)} />
+        <GlobalNav onOpenLang={() => setIsLangOpen(true)} />
         <main>
           <Hero />
           <StackingLayout />
