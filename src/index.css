@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Akzidenz Grotesk", "Akzidenz-Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: "Instrument Serif", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+.hide-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.continuous-slider .swiper-wrapper {
+  transition-timing-function: linear !important;
+}
+
+.hero-blob-mask {
+  mask-image: 
+    radial-gradient(circle 180px at var(--mx0, -400px) var(--my0, -400px), black 50%, transparent 100%),
+    radial-gradient(circle 120px at var(--mx1, -400px) var(--my1, -400px), rgba(0,0,0,0.8) 50%, transparent 100%),
+    radial-gradient(circle 80px at var(--mx2, -400px) var(--my2, -400px), rgba(0,0,0,0.6) 50%, transparent 100%),
+    radial-gradient(circle 50px at var(--mx3, -400px) var(--my3, -400px), rgba(0,0,0,0.4) 50%, transparent 100%),
+    radial-gradient(circle 30px at var(--mx4, -400px) var(--my4, -400px), rgba(0,0,0,0.2) 50%, transparent 100%);
+  -webkit-mask-image: 
+    radial-gradient(circle 180px at var(--mx0, -400px) var(--my0, -400px), black 50%, transparent 100%),
+    radial-gradient(circle 120px at var(--mx1, -400px) var(--my1, -400px), rgba(0,0,0,0.8) 50%, transparent 100%),
+    radial-gradient(circle 80px at var(--mx2, -400px) var(--my2, -400px), rgba(0,0,0,0.6) 50%, transparent 100%),
+    radial-gradient(circle 50px at var(--mx3, -400px) var(--my3, -400px), rgba(0,0,0,0.4) 50%, transparent 100%),
+    radial-gradient(circle 30px at var(--mx4, -400px) var(--my4, -400px), rgba(0,0,0,0.2) 50%, transparent 100%);
+  mask-composite: add;
+  -webkit-mask-composite: source-over;
+}
