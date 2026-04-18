@@ -1,9 +1,104 @@
-import { motion, AnimatePresence } from 'motion/react';
-import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent, useTransform } from 'motion/react';
+import { useState, useRef, useEffect, createContext, useContext } from 'react';
 import { Play, ChevronDown, Menu } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import 'swiper/css';
+
+// Context for Page Transition Overlays
+const TransitionContext = createContext<(targetId: string) => void>(() => {});
+
+function TransitionProvider({ children }: { children: React.ReactNode }) {
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const triggerTransition = (targetId: string) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView();
+      setTimeout(() => setIsTransitioning(false), 200);
+    }, 800); // Overlay covers, then scroll, then delay before reveal
+  };
+
+  return (
+    <TransitionContext.Provider value={triggerTransition}>
+      {children}
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: "0%" }}
+            exit={{ y: "-100%" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[100] bg-[#1a1a1a] flex items-center justify-center pointer-events-none"
+          >
+             <motion.span 
+               initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+               animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+               exit={{ opacity: 0 }}
+               transition={{ duration: 0.4, delay: 0.4 }}
+               className="text-[#EFEBE4] font-serif text-3xl md:text-5xl uppercase tracking-widest"
+             >
+               Kylie <span className="italic font-light lowercase">affair</span>
+             </motion.span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </TransitionContext.Provider>
+  );
+}
+
+function GlobalNav() {
+  const { scrollY } = useScroll();
+  const [hidden, setHidden] = useState(true);
+  const triggerTransition = useContext(TransitionContext);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    
+    if (latest < window.innerHeight * 0.8) { 
+      setHidden(true);
+    } else {
+      if (latest > previous) {
+        setHidden(true); // scrolling down
+      } else {
+        setHidden(false); // scrolling up
+      }
+    }
+  });
+
+  return (
+    <motion.header
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: "-100%" }
+      }}
+      initial="hidden"
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-5 md:px-12 bg-white/95 backdrop-blur-md text-gray-900 border-b border-gray-200/50 shadow-sm"
+    >
+      <nav className="hidden md:flex gap-8 text-xs tracking-widest font-medium uppercase z-10">
+        <a href="#about" className="hover:opacity-70 transition-opacity">About</a>
+        <a href="#services" className="hover:opacity-70 transition-opacity">Services</a>
+      </nav>
+      <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xl font-serif tracking-widest uppercase z-0 pointer-events-none">
+        Kylie <span className="italic font-light lowercase text-lg">affair</span>
+      </div>
+      <div className="flex items-center gap-6 z-10 w-full md:w-auto justify-between md:justify-end">
+        <button className="md:hidden"><Menu size={24} /></button>
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => triggerTransition('contact')}
+            className="flex items-center justify-center bg-gray-900 text-[#FAF9F6] px-6 py-2.5 text-xs tracking-widest font-medium uppercase rounded-sm overflow-hidden relative group shadow-md cursor-pointer"
+          >
+            <span className="relative z-10 transition-colors duration-500 group-hover:text-white">Book Now</span>
+            <span className="absolute inset-0 bg-gray-600 transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-500 ease-[0.16,1,0.3,1] z-0"></span>
+          </button>
+        </div>
+      </div>
+    </motion.header>
+  );
+}
 
 // Animation Variants for luxurious scroll effects
 const fadeInUp = {
@@ -43,6 +138,8 @@ function Hero() {
   const mouseX = useRef(-400);
   const mouseY = useRef(-400);
   const points = useRef(Array.from({length: 5}, () => ({x: -400, y: -400})));
+
+  const triggerTransition = useContext(TransitionContext);
 
   useEffect(() => {
     let animationId: number;
@@ -84,9 +181,9 @@ function Hero() {
         <span className="italic font-light lowercase">affair</span>
       </div>
       <div>
-        <a href="#contact" className="uppercase tracking-widest text-sm md:text-base font-medium hover:opacity-70 transition-opacity">
+        <button onClick={() => triggerTransition('contact')} className="uppercase tracking-widest text-sm md:text-base font-medium hover:opacity-70 transition-opacity cursor-pointer">
           Book Now
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -120,79 +217,95 @@ function Hero() {
   );
 }
 
-function BrandVibe() {
+function StackingLayout() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const scale = useTransform(scrollYProgress, [0, 0.4], [1, 0.92]);
+  const opacity = useTransform(scrollYProgress, [0, 0.4], [0, 0.7]);
+
   return (
-    <section id="about" className="py-24 px-6 md:px-12 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+    <div ref={containerRef} className="relative z-10 w-full bg-white">
+      {/* Sticky About Section */}
+      <motion.section 
+        style={{ scale }}
+        className="sticky top-0 h-screen px-6 md:px-12 flex flex-col justify-center overflow-hidden bg-white"
+      >
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-10%" }}
+            variants={imageReveal}
+            className="w-full md:w-1/2 flex justify-center lg:justify-start"
+          >
+            <div className="relative w-full max-w-[400px] aspect-[2/3] rounded-t-full overflow-hidden shadow-2xl shadow-gray-200/50 bg-gray-200">
+              <img 
+                src={grayPlaceholder} 
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </motion.div>
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-10%" }}
+            variants={staggerContainer}
+            className="w-full md:w-1/2 flex flex-col items-start"
+          >
+            <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-serif mb-6 uppercase tracking-wide text-gray-900">
+              I AM <span className="italic font-light lowercase">kylie</span> AFFAIR
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="text-gray-700 mb-8 text-lg leading-relaxed max-w-lg">
+              As an independent companion based in Düsseldorf, I am delighted to meet you here or in other destinations across Europe and beyond. With a genuine love for travel, elegant hotels, and meaningful encounters, I am available for engagements worldwide — wherever sophistication and serenity meet.
+            </motion.p>
+            <motion.button variants={fadeInUp} className="uppercase text-sm tracking-widest border-b border-gray-900 pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
+              Learn About Kylie
+            </motion.button>
+          </motion.div>
+        </div>
         <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-10%" }}
-          variants={imageReveal}
-          className="w-full md:w-1/2 flex justify-center lg:justify-start"
-        >
-          <div className="relative w-full max-w-[400px] aspect-[2/3] rounded-t-full overflow-hidden shadow-2xl shadow-gray-200/50 bg-gray-200">
-            <img 
-              src={grayPlaceholder} 
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </motion.div>
+          style={{ opacity }} 
+          className="absolute inset-0 bg-black pointer-events-none z-20" 
+        />
+      </motion.section>
+
+      {/* Philosophy Section that scrolls over */}
+      <section className="relative z-30 bg-[#FAF9F6] py-24 px-6 md:px-12 shadow-[0_-30px_60px_rgba(0,0,0,0.15)] rounded-t-[3rem]">
         <motion.div 
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-10%" }}
           variants={staggerContainer}
-          className="w-full md:w-1/2 flex flex-col items-start"
+          className="max-w-7xl mx-auto"
         >
-          <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-serif mb-6 uppercase tracking-wide text-gray-900">
-            I AM <span className="italic font-light lowercase">kylie</span> AFFAIR
-          </motion.h2>
-          <motion.p variants={fadeInUp} className="text-gray-700 mb-8 text-lg leading-relaxed max-w-lg">
-            As an independent companion based in Düsseldorf, I am delighted to meet you here or in other destinations across Europe and beyond. With a genuine love for travel, elegant hotels, and meaningful encounters, I am available for engagements worldwide — wherever sophistication and serenity meet.
-          </motion.p>
-          <motion.button variants={fadeInUp} className="uppercase text-sm tracking-widest border-b border-gray-900 pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
-            Learn About Kylie
-          </motion.button>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-function AboutUs() {
-  return (
-    <section className="py-24 px-6 md:px-12 bg-[#FAF9F6] overflow-hidden">
-      <motion.div 
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-10%" }}
-        variants={staggerContainer}
-        className="max-w-7xl mx-auto"
-      >
-        <div className="flex flex-col md:flex-row gap-12">
-          <motion.div variants={fadeInUp} className="md:w-1/3">
-            <h3 className="font-serif text-3xl uppercase tracking-wider mb-6 text-gray-900">STYLE & <span className="italic font-light lowercase pr-1">presence</span></h3>
-          </motion.div>
-          <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700 text-lg">
-            <motion.div variants={fadeInUp}>
-              <p className="mb-6">
-                There’s a quiet strength in elegance — a kind of presence that doesn’t need to be announced. That’s what defines me. 
-              </p>
-              <p>
-                Style, to me, is a love language — not about trends, but about how something makes you feel. I have a weakness for beautiful things: soft fabrics, timeless accessories, little treasures with a story.
-              </p>
+          <div className="flex flex-col md:flex-row gap-12">
+            <motion.div variants={fadeInUp} className="md:w-1/3">
+              <h3 className="font-serif text-3xl uppercase tracking-wider mb-6 text-gray-900">STYLE & <span className="italic font-light lowercase pr-1">presence</span></h3>
             </motion.div>
-            <motion.div variants={fadeInUp}>
-              <p className="mb-6">
-                I’m drawn to subtle fragrances, warm light, genuine people and places that feel alive. As a companion, I value authenticity and freedom — encounters that are sincere, kind and a little spontaneous.
-              </p>
-            </motion.div>
+            <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700 text-lg">
+              <motion.div variants={fadeInUp}>
+                <p className="mb-6">
+                  There’s a quiet strength in elegance — a kind of presence that doesn’t need to be announced. That’s what defines me. 
+                </p>
+                <p>
+                  Style, to me, is a love language — not about trends, but about how something makes you feel. I have a weakness for beautiful things: soft fabrics, timeless accessories, little treasures with a story.
+                </p>
+              </motion.div>
+              <motion.div variants={fadeInUp}>
+                <p className="mb-6">
+                  I’m drawn to subtle fragrances, warm light, genuine people and places that feel alive. As a companion, I value authenticity and freedom — encounters that are sincere, kind and a little spontaneous.
+                </p>
+              </motion.div>
+            </div>
           </div>
-        </div>
-      </motion.div>
-    </section>
+        </motion.div>
+      </section>
+    </div>
   );
 }
 
@@ -384,16 +497,18 @@ function Footer() {
 
 export default function App() {
   return (
-    <div className="font-sans text-gray-900 antialiased selection:bg-[#1A1A1A] selection:text-[#EFEBE4]">
-      <main>
-        <Hero />
-        <BrandVibe />
-        <AboutUs />
-        <InteractiveFlex />
-        <Destinations />
-        <ContactCTA />
-      </main>
-      <Footer />
-    </div>
+    <TransitionProvider>
+      <div className="font-sans text-gray-900 antialiased selection:bg-[#1A1A1A] selection:text-[#EFEBE4]">
+        <GlobalNav />
+        <main>
+          <Hero />
+          <StackingLayout />
+          <InteractiveFlex />
+          <Destinations />
+          <ContactCTA />
+        </main>
+        <Footer />
+      </div>
+    </TransitionProvider>
   );
 }
