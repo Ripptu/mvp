@@ -122,7 +122,7 @@ function GlobalNav() {
         <a href="#about" className="hover:opacity-70 transition-opacity">About</a>
         <a href="#services" className="hover:opacity-70 transition-opacity">Services</a>
       </nav>
-      <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xl font-serif tracking-widest uppercase z-0 pointer-events-none">
+      <div className="hidden md:block md:absolute md:left-1/2 md:-translate-x-1/2 text-xl font-serif tracking-widest uppercase z-0 pointer-events-none">
         Kylie <span className="italic font-light lowercase text-lg">affair</span>
       </div>
       <div className="flex items-center gap-6 z-10 w-full md:w-auto justify-between md:justify-end">
